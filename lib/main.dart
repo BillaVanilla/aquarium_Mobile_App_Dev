@@ -40,9 +40,42 @@ class Fish {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+List<Fish> fishList = [];
+Color selectedColor = Colors.blue;
+double selectedSpeed = 1.0;
+Database? database;
 
+@override
+  void initState() {
+    super.initState();
+    initDatabase();
+  }
 
-  
+  Future<void> initDatabase() async {
+    database = await openDatabase(
+      join(await getDatabasesPath(), 'aquarium.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          "CREATE TABLE settings(id INTEGER PRIMARY KEY, fishCount INTEGER, speed REAL, color TEXT)",
+        );
+      },
+      version: 1,
+    );
+    loadSettings();
+  }
+
+   Future<void> loadSettings() async {
+    final List<Map<String, dynamic>> maps = await database!.query('settings');
+    if (maps.isNotEmpty) {
+      var savedSettings = maps[0];
+      setState(() {
+        fishList = List.generate(savedSettings['fishCount'], (_) => Fish(color: selectedColor, speed: selectedSpeed));
+        selectedSpeed = savedSettings['speed'];
+        selectedColor = Color(int.parse(savedSettings['color']));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
       return Scaffold(
