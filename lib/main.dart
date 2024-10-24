@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  const MyHomePage({super.key, required String title});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -142,9 +144,85 @@ Database? database;
                 });
               },
             ),
+             DropdownButton<Color>(
+              value: selectedColor,
+              items: <Color>[Colors.blue, Colors.red, Colors.green, Colors.yellow]
+                  .map<DropdownMenuItem<Color>>((Color value) {
+                return DropdownMenuItem<Color>(
+                  value: value,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    color: value,
+                  ),
+                );
+              }).toList(),
+              onChanged: (Color? newValue) {
+                setState(() {
+                  selectedColor = newValue!;
+                });
+              },
+            ),
           ],
         ),
       ),
     );
+  }
+}
+class FishWidget extends StatefulWidget {
+  final Fish fish;
+
+  const FishWidget({super.key, required this.fish});
+
+  @override
+  _FishWidgetState createState() => _FishWidgetState();
+}
+
+class _FishWidgetState extends State<FishWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(seconds: (4 / widget.fish.speed).round()),
+      vsync: this,
+    );
+
+    final random = Random();
+    _animation = Tween<Offset>(
+      begin: Offset(random.nextDouble(), random.nextDouble()),
+      end: Offset(random.nextDouble(), random.nextDouble()),
+    ).animate(_controller);
+
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Positioned(
+          left: _animation.value.dx * 300,
+          top: _animation.value.dy * 300,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.fish.color,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
